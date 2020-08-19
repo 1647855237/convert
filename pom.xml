@@ -21,6 +21,12 @@
     </properties>
 
     <dependencies>
+        <!-- 时间处理工具类-->
+        <dependency>
+            <groupId>cn.hutool</groupId>
+            <artifactId>hutool-core</artifactId>
+            <version>5.2.5</version>
+        </dependency>
         <!-- mybatis-plus-->
         <dependency>
             <groupId>com.baomidou</groupId>

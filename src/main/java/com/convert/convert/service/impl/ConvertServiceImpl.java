@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
+import java.util.Random;
 
 /**
  * @Author: xiongwei
@@ -24,6 +25,10 @@ public class ConvertServiceImpl extends ServiceImpl<ConvertMapper, Convert> impl
     @Autowired
     private RedisUtil redisUtil;
 
+    private static final char[] chars = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
+
 
     @Override
     public String convert(String url) {
@@ -32,12 +37,12 @@ public class ConvertServiceImpl extends ServiceImpl<ConvertMapper, Convert> impl
         Convert convert = new Convert();
         convert.setLongUrl(url);
         convert.setType(0);
-        QueryWrapper<Convert> queryWrapper = new QueryWrapper<>(convert) ;
+        QueryWrapper<Convert> queryWrapper = new QueryWrapper<>(convert);
         // 先判断数据库是否有
         Convert selectOne = convertMapper.selectOne(queryWrapper);
         if (selectOne == null) {
             // 生成短链接
-            shortUrl = this.getLongUrl();
+            shortUrl = this.getShortUrl();
             convert.setShortUrl(shortUrl);
             convert.setCreateDate(new Date());
             convert.setCount(convert.getCount());
@@ -45,51 +50,45 @@ public class ConvertServiceImpl extends ServiceImpl<ConvertMapper, Convert> impl
         } else {
             shortUrl = selectOne.getShortUrl();
         }
-            return shortUrl;
+        return shortUrl;
     }
 
     /**
-     * 第一种：利用redis获取全局分布式id
      * @return
      */
-    public String getLongUrl(){
+    public String getShortUrl(){
         long id = getId();
-        byte[] byteArray = long2byteArray(id);
-        return byteArray2Hex(byteArray);
+        return format62radix(id);
     }
 
-    private String byteArray2Hex(byte[] bytes) {
+
+    /**
+     * 10进制转62进制
+     *  限制五位数，最多自增到916132832L。
+     *  自己写算法，自己目前只能写出这个，如果可以用别人的算法，可以用推特的雪花算法来计算
+     * @param id
+     * @return
+     */
+    private static String format62radix(long id) {
         StringBuilder sb = new StringBuilder();
-        for (byte aByte : bytes) {
-            sb.append(byte2Hex(aByte));
+        long tmp = id;
+        while (true) {
+            // 求余
+            int remainder = (int) (tmp % 62);
+            sb.append(chars[remainder]);
+            // 余数会重复，第二次进一位到时候不会重复
+            tmp = tmp / 62;
+            if (tmp == 0) {
+                break;
+            }
+        }
+        if (sb.length() < 5) {
+            int differ = 5 - sb.length();
+            for (int i = 0; i < differ; i++) {
+                sb.insert(0, chars[new Random().nextInt(62)]);
+            }
         }
         return sb.toString();
-    }
-
-    /**
-     * byte转16进制
-     * @return
-     */
-    private String byte2Hex(byte b) {
-        return Integer.toHexString(b);
-    }
-
-    /**
-     * long转byte数组
-     * @param in 输入
-     * @return
-     */
-    private byte[] long2byteArray(long in) {
-        byte[] result = new byte[8];
-        result[7] = (byte) (in & 0xFFFF);
-        result[6] = (byte) ((in & 0xFFFF) >>> 8);
-        result[5] = (byte) ((in & 0xFFFF) >>> 16);
-        result[4] = (byte) ((in & 0xFFFF) >>> 24);
-        result[3] = (byte) ((in & 0xFFFF) >>> 32);
-        result[2] = (byte) ((in & 0xFFFF) >>> 40);
-        result[1] = (byte) ((in & 0xFFFF) >>> 48);
-        result[0] = (byte) ((in & 0xFFFF) >>> 56);
-        return result;
     }
 
     /**
@@ -99,4 +98,15 @@ public class ConvertServiceImpl extends ServiceImpl<ConvertMapper, Convert> impl
     private long getId() {
         return redisUtil.incrBy("id",1);
     }
+
+    /**
+     * 第一种： 利用redis自增获取唯一id
+     *
+     * @return
+     */
+//    public String getLongUrl() {
+//        return Long.toString(redisUtil.incrBy("id", 1));
+//    }
+
+
 }

@@ -1,5 +1,8 @@
 package com.convert.convert.Interceptor;
 
+import cn.hutool.core.date.DateField;
+import cn.hutool.core.date.DateUnit;
+import cn.hutool.core.date.DateUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.convert.convert.config.RedisUtil;
 import com.convert.convert.entity.Convert;
@@ -12,6 +15,7 @@ import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.Date;
 
 /**
  * @Author: xiongwei
@@ -26,7 +30,7 @@ public class CovertInterceptor implements HandlerInterceptor {
     @Autowired
     private RedisUtil redisUtil;
 
-    private static final int DEFUAULTCONUT = 1;
+    private static final int DEFUAULTCONUT = 10;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -47,12 +51,22 @@ public class CovertInterceptor implements HandlerInterceptor {
 
         Convert selectOne = convertMapper.selectOne(queryWrapper);
         if (selectOne != null) {
+            // 时间1分钟失效
+            Date oldDate = selectOne.getCreateDate();
+            Date newDate = DateUtil.offset(oldDate, DateField.MINUTE, 1);
+            Date date = new Date();
+            long betweenDay = DateUtil.between(date, newDate, DateUnit.MINUTE);
+            if (betweenDay > 1) {
+                response.setStatus(404);
+                return false;
+            }
+
             Integer count = selectOne.getCount();
             // 调用次数过多，放入缓存
             if (count == DEFUAULTCONUT) {
                 redisUtil.set(shortUrl, selectOne.getLongUrl());
             }
-            selectOne.setCount(+1);
+            selectOne.setCount(selectOne.getCount()+1);
             convertMapper.updateById(selectOne);
             longUrl = selectOne.getLongUrl();
             response.sendRedirect(longUrl);

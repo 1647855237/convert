@@ -20,6 +20,12 @@ public class MyConfiguration implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(covertInterceptor).addPathPatterns("/**")
-                .excludePathPatterns("/send").excludePathPatterns("/*.html");
+                .excludePathPatterns("/static/**")
+                .excludePathPatterns("/js/**")
+                .excludePathPatterns("/")
+                .excludePathPatterns("/send")
+                .excludePathPatterns("/manager")
+                .excludePathPatterns("/convert/list")
+                .excludePathPatterns("/del");
     }
 }

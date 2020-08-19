@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="static/css/reset.css" />
+    <link rel="stylesheet" href="static/js/layui/css/layui.css"/>
+    <script type="text/javascript" src="static/js/jquery-1.11.3.min.js"></script>
+    <script type="text/javascript" src="static/js/layui/layui.all.js" charset="utf-8"></script>
+
+</head>
+<body>
+<div class="manage_table_wrap">
+    <table class="layui-hide" id="role_table" lay-filter="role_table_tool"></table>
+</div>
+
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+
+<script>
+    $(function () {
+        var table = layui.table;
+        //监听工具条
+        table.on('tool(role_table_tool)', function(obj){
+             if(obj.event === 'del'){
+                layer.confirm('真的删除行么', function(index){
+                    layer.close(index);
+                    $.ajax({
+                        url: "/del?id="+obj.data.id,
+                        type: "get",
+                        contentType: 'application/json',
+                        success: function (value) {
+                            if (value.indexOf("操作成功") != -1) {
+                                obj.del();
+                            } else {
+                                layer.alert("操作失败");
+                            }
+                        },
+                        error: function () {
+                            layer.alert("服务器异常，请重试");
+                        }
+                    })
+                });
+            }
+        });
+
+        //展示角色管理数据
+        table.render({
+            elem: '#role_table',
+            size: "lg",
+            url: "/convert/list",
+            cellMinWidth: 150,
+            method: 'post',
+            cols: [
+                [ //标题栏
+                    {
+                        field: 'id',
+                        title: '序号',
+                        align: "center",
+                        width: 80
+                    }, {
+                    field: 'shortUrl',
+                    title: '短链接',
+                    align: "center"
+                }, {
+                    field: 'longUrl',
+                    title: '长链接',
+                    align: "center"
+                }, {
+                    field: 'createDate',
+                    title: '创建时间',
+                    align: "center"
+                }, {
+                    field: 'name5',
+                    title: '操作',
+                    align: "center",
+                    templet: '#barDemo'
+                }
+                ]
+            ],
+            data: [{
+                "id": "01",
+                "shortUrl": "角色管理",
+                "longUrl": "显示权限地址",
+                "createDate": "2020/08/01 12:00:00"
+            }, {
+                "name1": "02",
+                "name2": "角色管理",
+                "name3": "显示权限地址",
+                "name4": "2020/08/01 12:00:00",
+                "name4": "2020/08/01 12:00:00"
+            },
+                {
+                    "name1": "03",
+                    "name2": "角色管理",
+                    "name3": "显示权限地址",
+                    "name4": "2020/08/01 12:00:00",
+                    "name4": "2020/08/01 12:00:00"
+                }
+            ],
+            parseData: function (res) {
+                return {
+                    "code": 0,
+                    "msg": res.message,
+                    "data": res,
+                }
+            },
+            //page: true //是否显示分页
+            //,limits: [5, 7, 10]
+            //,limit: 15//每页默认显示的数量
+        });
+    })
+
+
+</script>
+</body>
+</html>
