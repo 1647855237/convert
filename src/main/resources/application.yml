@@ -1,0 +1,26 @@
+server:
+  port: 8083
+spring:
+  resources:
+    static-locations: classpath:/
+  redis:
+    host: localhost
+    database: 0
+    port: 6379
+    password:
+  datasource:
+    driver-class-name: com.mysql.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/test?useSSL=false&useUnicode=true&characterEncoding=utf8
+    username: root
+    password: 123456
+mybatis-plus:
+  mapper-locations: classpath:/mapper/*Mapper.xml
+  typeAliasesPackage: com.convert.convert.entity
+  global-config:
+    id-type: 0
+    field-strategy: 2
+    db-column-underline: true
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
